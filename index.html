@@ -149,7 +149,8 @@
         
         /* Only Page Name stays in the Hero area */
         .article-title-container { 
-            position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; color: white; 
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; 
+            color: white; /* FIX: Title is white */
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
             /* FIX: Ensure no border/line is visible */
@@ -165,14 +166,18 @@
         }
         .article-description, .wiki-credit { display: none; } /* Moved outside hero */
 
-        /* FIX: Article Info Centering */
+        /* FIX: Article Info Centering & Spacing */
         .article-info-centered {
             max-width: var(--max-width);
             width: 100%;
             margin: 0 auto; 
             box-sizing: border-box;
-            padding: 0 30px; 
-            text-align: center; /* FIX: Center the text */
+            padding: 10px 30px; /* Reduced vertical padding */
+            text-align: center; 
+        }
+        .article-info-centered p {
+            margin: 0; /* FIX: Remove space after description and before credit */
+            padding: 2px 0;
         }
         
         .content-container { 
@@ -186,7 +191,7 @@
             background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             max-width: var(--max-width); width: 100%; box-sizing: border-box; font-size: var(--font-size); color: var(--text-color);
         }
-        #article-content a { color: inherit; text-decoration: underline; }
+        #article-content a { color: inherit; text-decoration: underline; cursor: pointer; } /* Added cursor for links */
         #article-content a:hover { color: var(--link-hover); }
 
         /* --- Section Title Fixes --- */
@@ -225,7 +230,7 @@
             width: 100% !important;
             height: auto !important;
             object-fit: contain;
-            font-weight: 400 !important; /* Ensure image icons are not bold */
+            font-weight: 400 !important; 
         }
         
         /* Fix: Caption should be centered and italic, not bold */
@@ -245,9 +250,10 @@
         #article-content .infobox, #article-content table {
             font-family: Arial, Helvetica, sans-serif !important; font-size: 0.9em; border-collapse: collapse;
             margin: 1em auto; background-color: var(--table-bg) !important; color: var(--text-color);
-            font-weight: 400 !important; /* Ensure table content is not bold */
+            font-weight: 400 !important; 
         }
-        #article-content .infobox { float: right; clear: right; margin: 0.5em 0 0.5em 1em; border: 1px solid var(--text-color); padding: 0.2em; width: 300px; max-width: 40% !important; box-sizing: border-box; }
+        /* FIX: Infoboxes clear right to prevent side-by-side */
+        #article-content .infobox { float: right; clear: right !important; margin: 0.5em 0 0.5em 1em; border: 1px solid var(--text-color); padding: 0.2em; width: 300px; max-width: 40% !important; box-sizing: border-box; }
         #article-content .infobox th, #article-content .infobox td, #article-content table th, #article-content table td { border: 1px solid var(--text-color); padding: 0.3em; }
         #article-content .infobox, #article-content table:not(.navbox):not(.vertical-navbox) { display: table !important; }
         #article-content .infobox th { font-weight: 700 !important; } /* Headers are an exception */
@@ -261,10 +267,11 @@
         }
 
         .loading { text-align: center; padding: 50px; font-size: 1.5em; color: var(--text-color); }
+        
         @media (max-width: 600px) {
             .settings-menu.open, .toc-menu.open { width: 100%; }
             .article-title-container h1 { font-size: 2.5em !important; }
-            #article-content .infobox { float: none; margin: 1em auto; width: 90%; max-width: 90% !important; }
+            #article-content .infobox { float: none; clear: both !important; margin: 1em auto; width: 90%; max-width: 90% !important; }
             /* Triple size might be too much for mobile, adjust down on small screens */
             #article-content .thumb, #article-content .tright, #article-content .tleft, #article-content figure {
                  width: 90% !important; 
@@ -379,8 +386,8 @@
 
     <div class="content-container-outer">
         <div id="article-info" class="article-info-centered">
-            <p id="article-description" class="article-description" style="font-size: 1.2em; font-weight: 400; margin-top: 5px; margin-bottom: 5px; color: var(--text-color);"></p>
-            <p class="wiki-credit" style="opacity:.85; margin-top: 0; color: var(--text-color);">From Wikipedia, the free encyclopedia</p>
+            <p id="article-description" class="article-description" style="font-size: 1.2em; font-weight: 400; color: var(--text-color);"></p>
+            <p class="wiki-credit" style="opacity:.85; color: var(--text-color);">From Wikipedia, the free encyclopedia</p>
         </div>
     </div>
 
@@ -470,14 +477,23 @@
     }, true);
 
 
-    function showError(message, detail){
-        articleContentDiv.innerHTML = `<div class="loading" style="color:#a00"><h2>⚠️ Error</h2><p>${message}</p><p style="opacity:.8">${detail||''}</p></div>`;
+    // FIX: Modify showError to handle not found with search link
+    function showError(message, detail, failedTitle){
         heroImage.src = '';
         articleTitleHeader.textContent = 'Error';
         articleDescription.textContent = '';
         articleDescription.style.display = 'none';
         articleInfoDiv.querySelector('.wiki-credit').style.display = 'none';
         tocListContainer.innerHTML = '<p style="opacity:.7">Error.</p>';
+        
+        let errorHTML = `<div class="loading" style="color:#a00"><h2>⚠️ Error</h2><p>${message}</p><p style="opacity:.8">${detail||''}</p></div>`;
+
+        if (failedTitle) {
+            const searchUrl = 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(failedTitle);
+            errorHTML += `<p style="text-align:center; font-size:1.1em;">Try searching directly on Wikipedia: <a href="${searchUrl}" target="_blank" rel="noopener" style="color:var(--link-hover);">Search for "${failedTitle}"</a></p>`;
+        }
+
+        articleContentDiv.innerHTML = errorHTML;
     }
 
     // --- Core Article Fetching (CORS/REST) ---
@@ -497,7 +513,8 @@
             // 1) Fetch summary (metadata + thumbnail)
             const summaryResp = await fetch(WIKI_REST_SUMMARY + encoded, {mode:'cors'});
             if(!summaryResp.ok){
-                if(summaryResp.status===404) return showError('Article not found','Try a different search term.');
+                // FIX: Pass the failed title to showError for a better search option
+                if(summaryResp.status===404) return showError('Article not found','Try a different search term.', title);
                 throw new Error('Summary fetch failed: ' + summaryResp.status);
             }
             const summary = await summaryResp.json();
@@ -583,15 +600,24 @@
             img.removeAttribute('srcset');
             img.removeAttribute('sizes');
         });
+        
+        // FIX: Series Box Placement (move to end)
+        const seriesBoxes = articleContentDiv.querySelectorAll('.series-box, .series-series, table.series, .series-series-box');
+        seriesBoxes.forEach(box => {
+            // Remove the box from its current position
+            box.remove();
+            // Append it to the very end of the content
+            articleContentDiv.appendChild(box);
+        });
 
         // FIX: Links: Ensure all internal Wikipedia links are handled by the reader
         articleContentDiv.querySelectorAll('a').forEach(a=>{
             const href = a.getAttribute('href') || '';
             
-            if(href.startsWith('/wiki/') || (href.startsWith('/') && href.indexOf(':') === -1 && href.length > 1)){
-                // Handle as internal article link
+            if(href.startsWith('/wiki/')){
+                // Internal Wikipedia link
                 const titleMatch = href.match(/\/wiki\/([^&]+)/) || [null, ''];
-                const title = decodeURIComponent(titleMatch[1] || href.substring(1)).replace(/_/g,' ');
+                const title = decodeURIComponent(titleMatch[1] || href.substring(6)).replace(/_/g,' ');
                 
                 a.setAttribute('data-article', title);
                 a.removeAttribute('href'); // <-- CRITICAL FIX: Removes the browser's navigation ability
@@ -642,13 +668,15 @@
     }
 
     function setupLinkListeners(){
-        // Fix: Use the wiki-link class to listen for internal navigation clicks
+        // FIX: Use the wiki-link class to listen for internal navigation clicks
         articleContentDiv.querySelectorAll('.wiki-link').forEach(link=>{
             link.addEventListener('click', e=>{
                 e.preventDefault(); // CRITICAL: Stop the browser from navigating if any href remains
                 const articleTitle = e.currentTarget.getAttribute('data-article');
-                searchInput.value = articleTitle;
-                fetchArticle(articleTitle);
+                if(articleTitle) {
+                    searchInput.value = articleTitle;
+                    fetchArticle(articleTitle);
+                }
             });
         });
     }
