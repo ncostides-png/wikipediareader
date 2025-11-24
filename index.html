@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minimal Wikipedia Reader (CORS)</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Poppins:wght@700&family=Noto+Sans:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Raleway:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Poppins:wght@700&family=Noto+Sans:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Raleway:wght@400;700&family=Nunito+Sans:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Tangerine:wght@400;700&family=Cinzel:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Oswald:wght@400;700&family=Inter:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -98,10 +98,42 @@
         .toc-menu .close-btn { position: absolute; top: 0; right: 25px; font-size: 36px; color: var(--text-color); text-decoration: none; }
         .settings-menu .close-btn { position: absolute; top: 0; left: 25px; font-size: 36px; color: var(--text-color); text-decoration: none; }
         
-        /* TOC Font Fix */
-        #toc-menu { font-family: 'Georgia', serif; }
-        #toc-list-container a { text-decoration: underline; color: var(--text-color); }
+        /* TOC Font Fix: Georgia and Underlined */
+        #toc-menu { font-family: 'Georgia', serif !important; }
+        #toc-list-container a { text-decoration: underline !important; color: var(--text-color); }
 
+        /* --- Settings Layout Fix (Restored) --- */
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .setting-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+        .theme-select-btn {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background-color: var(--toc-hover);
+            color: var(--text-color);
+            border: 1px solid var(--toc-hover);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #settings-menu select,
+        #settings-menu input[type="range"] {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            background-color: var(--content-bg);
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+        }
+        
         /* --- Hero Section & Content --- */
         .hero { 
             height: var(--hero-height); 
@@ -116,7 +148,9 @@
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; color: white; 
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
-            border: none !important; /* Fix: remove line under title */
+            /* Fix: ensure no border is visible */
+            border-top: none !important;
+            border-bottom: none !important; 
         }
         
         /* Fix: Title on top of page should be in Roboto */
@@ -125,8 +159,23 @@
             font-family: 'Roboto', sans-serif !important; 
         }
         .article-description, .wiki-credit { display: none; } /* Moved outside hero */
+
+        /* Fix: Article Info Centering/Placement */
+        .article-info-centered {
+            max-width: var(--max-width);
+            width: 100%;
+            margin: 0 auto; /* Center it */
+            box-sizing: border-box;
+            padding: 0 30px; /* Match content padding */
+        }
         
-        .content-container { display: flex; justify-content: center; padding: 40px 20px; }
+        .content-container { 
+            display: flex; 
+            flex-direction: column; /* Ensure children stack vertically */
+            align-items: center; /* Center them horizontally */
+            padding: 40px 20px; 
+            padding-top: 0; /* No extra padding on top since info block is above */
+        }
         #article-content {
             background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             max-width: var(--max-width); width: 100%; box-sizing: border-box; font-size: var(--font-size); color: var(--text-color);
@@ -145,16 +194,33 @@
         #article-content h3 { font-size: 1.5em !important; } /* Fix: larger font */
 
         /* --- Image/Caption Fixes --- */
-        /* Fix: Remove boxes around images and set caption style */
-        #article-content .thumb, #article-content .tright, #article-content .tleft, #article-content figure {
+        
+        /* Fix: Triple image size, remove box, center block, remove float */
+        #article-content .thumb, 
+        #article-content .tright, 
+        #article-content .tleft, 
+        #article-content figure {
             border: none !important; /* Fix: remove box around image */
             padding: 0 !important;
-        }
-        #article-content img {
-            max-width: 100%; height: auto; display: block; margin: 1em auto; border-radius: 10px; object-fit: contain; 
-            border: none !important; /* ensure image itself has no border */
+            margin: 2em auto !important; /* Center the larger block */
+            float: none !important; /* Remove floating for a cleaner block layout */
+            /* Increase the wrapper width to approximately 3x a typical thumbnail (220px * 3 = 660px) */
+            width: 660px !important; 
+            max-width: 90% !important; /* Ensure it doesn't overflow small screens */
+            height: auto !important;
         }
 
+        /* Ensure the image within the triple-sized container fills it */
+        #article-content .thumb img,
+        #article-content .tright img,
+        #article-content .tleft img,
+        #article-content figure img {
+            max-width: 100% !important; 
+            width: 100% !important;
+            height: auto !important;
+            object-fit: contain;
+        }
+        
         /* Fix: Caption should be centered and italic */
         #article-content figcaption, #article-content .thumbcaption {
             font-style: italic;
@@ -164,6 +230,7 @@
             border: none !important;
             padding: 0.5em 0;
             margin: 0;
+            line-height: 1.3;
         }
 
         /* --- Table and Infobox Styling (Inherited/Checked) --- */
@@ -171,7 +238,6 @@
             font-family: Arial, Helvetica, sans-serif !important; font-size: 0.9em; border-collapse: collapse;
             margin: 1em auto; background-color: var(--table-bg) !important; color: var(--text-color);
         }
-        /* ... (rest of table styles remain the same) ... */
         #article-content .infobox { float: right; clear: right; margin: 0.5em 0 0.5em 1em; border: 1px solid var(--text-color); padding: 0.2em; width: 300px; max-width: 40% !important; box-sizing: border-box; }
         #article-content .infobox th, #article-content .infobox td, #article-content table th, #article-content table td { border: 1px solid var(--text-color); padding: 0.3em; }
         #article-content .infobox, #article-content table:not(.navbox):not(.vertical-navbox) { display: table !important; }
@@ -189,6 +255,10 @@
             .settings-menu.open, .toc-menu.open { width: 100%; }
             .article-title-container h1 { font-size: 2em; }
             #article-content .infobox { float: none; margin: 1em auto; width: 90%; max-width: 90% !important; }
+            /* Triple size might be too much for mobile, adjust down to 1.5x on small screens */
+            #article-content .thumb, #article-content .tright, #article-content .tleft, #article-content figure {
+                 width: 450px !important; /* 220px * 1.5 ~ 330px, let's keep it max-width 90% */
+            }
         }
     </style>
 </head>
@@ -218,46 +288,75 @@
         <a href="javascript:void(0)" class="close-btn" id="menu-close-btn">&times;</a>
         <h2 style="padding:0 20px">Reading Settings</h2>
         <div style="padding:10px">
-            <h3>Theme</h3>
-            <button id="theme-light-btn" class="theme-select-btn" data-theme="theme-light">💡 Light Theme</button>
-            <button id="theme-dark-btn" class="theme-select-btn" data-theme="theme-dark">🌙 Dark Theme</button> <button id="theme-midnight-btn" class="theme-select-btn" data-theme="theme-midnight">🌑 Midnight Theme</button>
+            <div class="setting-group">
+                <h3>Theme</h3>
+                <button id="theme-light-btn" class="theme-select-btn" data-theme="theme-light">💡 Light Theme</button>
+                <button id="theme-dark-btn" class="theme-select-btn" data-theme="theme-dark">🌙 Dark Theme</button>
+                <button id="theme-midnight-btn" class="theme-select-btn" data-theme="theme-midnight">🌑 Midnight Theme</button>
+            </div>
 
             <hr style="border-color: var(--text-color); opacity: 0.1;">
 
-            <h3>Typography</h3>
-            <label for="font-select">Font Face:</label>
-            <select id="font-select">
-                <option value="'Georgia', serif">Georgia (Default)</option>
-                <option value="'Noto Sans', sans-serif">Noto Sans</option>
-                <option value="'Open Sans', sans-serif">Open Sans</option>
-                <option value="'Lato', sans-serif">Lato</option>
-                <option value="'Montserrat', sans-serif">Montserrat</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Arial', sans-serif">Arial</option>
-                <option value="'Verdana', sans-serif">Verdana</option>
-                <option value="'Raleway', sans-serif">Raleway</option>
-                <option value="'Nunito Sans', sans-serif">Nunito Sans</option>
-                <option value="'Roboto', sans-serif">Roboto</option>
-                <option value="'Poppins', sans-serif">Poppins</option>
-            </select>
+            <div class="setting-group">
+                <h3>Typography</h3>
+            </div>
+            
+            <div class="setting-group">
+                <label for="font-select">Font Face:</label>
+                <select id="font-select">
+                    <option value="'Georgia', serif">Georgia (Default)</option>
+                    <option value="'Noto Sans', sans-serif">Noto Sans</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Arial', sans-serif">Arial</option>
+                    <option value="'Verdana', sans-serif">Verdana</option>
+                    <option value="'Raleway', sans-serif">Raleway</option>
+                    <option value="'Nunito Sans', sans-serif">Nunito Sans</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Tangerine', cursive">Tangerine</option>
+                    <option value="'Cinzel', serif">Cinzel</option>
+                    <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                    <option value="'Oswald', sans-serif">Oswald</option>
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="'Lora', serif">Lora</option>
+                </select>
+            </div>
 
-            <label for="font-size-range">Font Size: <span id="font-size-value">1.15</span>em</label>
-            <input type="range" id="font-size-range" min="0.8" max="1.6" step="0.05" value="1.15">
+            <div class="setting-group">
+                <label for="font-size-range">Font Size: <span id="font-size-value">1.15</span>em</label>
+                <input type="range" id="font-size-range" min="0.8" max="1.6" step="0.05" value="1.15">
+            </div>
 
-            <label for="kerning-range">Kerning (Letter Spacing): <span id="kerning-value">0.0</span>em</label>
-            <input type="range" id="kerning-range" min="-0.05" max="0.1" step="0.01" value="0.0">
+            <div class="setting-group">
+                <label for="kerning-range">Kerning (Letter Spacing): <span id="kerning-value">0.0</span>em</label>
+                <input type="range" id="kerning-range" min="-0.05" max="0.1" step="0.01" value="0.0">
+            </div>
 
-            <label for="line-height-range">Line Height: <span id="line-height-value">1.6</span></label>
-            <input type="range" id="line-height-range" min="1.0" max="2.5" step="0.1" value="1.6">
+            <div class="setting-group">
+                <label for="line-height-range">Line Height: <span id="line-height-value">1.6</span></label>
+                <input type="range" id="line-height-range" min="1.0" max="2.5" step="0.1" value="1.6">
+            </div>
             
             <hr style="border-color: var(--text-color); opacity: 0.1;">
 
-            <h3>Layout</h3>
-            <label for="page-width-range">Page Width: <span id="page-width-value">750</span>px</label>
-            <input type="range" id="page-width-range" min="400" max="1000" step="10" value="750">
+            <div class="setting-group">
+                <h3>Layout</h3>
+            </div>
+            
+            <div class="setting-group">
+                <label for="page-width-range">Page Width: <span id="page-width-value">750</span>px</label>
+                <input type="range" id="page-width-range" min="400" max="1000" step="10" value="750">
+            </div>
 
-            <label for="hero-height-range">Hero Image Height: <span id="hero-height-value">400</span>px</label>
-            <input type="range" id="hero-height-range" min="200" max="800" step="20" value="400">
+            <div class="setting-group">
+                <label for="hero-height-range">Hero Image Height: <span id="hero-height-value">400</span>px</label>
+                <input type="range" id="hero-height-range" min="200" max="800" step="20" value="400">
+            </div>
         </div>
     </div>
 
@@ -268,12 +367,14 @@
         </div>
     </div>
 
-    <div class="content-container">
-        <div id="article-info" style="max-width: var(--max-width); width: 100%; box-sizing: border-box; padding: 0 30px;">
+    <div class="content-container-outer">
+        <div id="article-info" class="article-info-centered">
             <p id="article-description" class="article-description" style="font-size: 1.2em; font-weight: 400; margin-top: 5px; margin-bottom: 5px; color: var(--text-color);"></p>
             <p class="wiki-credit" style="opacity:.85; margin-top: 0; color: var(--text-color);">From Wikipedia, the free encyclopedia</p>
         </div>
-        
+    </div>
+
+    <div class="content-container">
         <div id="article-content">
             <div class="loading">Search above to load a Wikipedia article.</div>
         </div>
@@ -346,13 +447,15 @@
     document.getElementById('toc-open-btn').onclick = () => tocMenu.classList.add('open');
     document.getElementById('toc-close-btn').onclick = () => tocMenu.classList.remove('open');
 
-    // Fix: close menus when clicking on the article content
+    // Fix: close menus when clicking on the article content area (excluding buttons/menus themselves)
     document.addEventListener('click', (e) => {
-        if (settingsMenu.classList.contains('open') && !settingsMenu.contains(e.target) && !document.getElementById('menu-open-btn').contains(e.target)) {
-            settingsMenu.classList.remove('open');
-        }
-        if (tocMenu.classList.contains('open') && !tocMenu.contains(e.target) && !document.getElementById('toc-open-btn').contains(e.target)) {
-            tocMenu.classList.remove('open');
+        const isSettingsOpen = settingsMenu.classList.contains('open');
+        const isTocOpen = tocMenu.classList.contains('open');
+        const isClickOnArticle = articleContentDiv.contains(e.target) || articleInfoDiv.contains(e.target);
+
+        if (isClickOnArticle) {
+            if (isSettingsOpen) settingsMenu.classList.remove('open');
+            if (isTocOpen) tocMenu.classList.remove('open');
         }
     }, true);
 
@@ -449,7 +552,7 @@
         sectionsToRemove.forEach(text => {
             articleContentDiv.querySelectorAll(`h2, h3`).forEach(h => {
                 const title = h.textContent.replace(/\[edit\]/g,'').trim();
-                if(title === text) {
+                if(sectionsToRemove.includes(title)) {
                     let next = h.nextElementSibling;
                     while(next && next.tagName !== 'H2' && next.tagName !== 'H3') {
                         const toRemove = next;
