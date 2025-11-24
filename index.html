@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Minimal Wikipedia Reader (CORS)</title>
+    <title>Minimal Wikipedia Reader</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Noto+Sans:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Raleway:wght@400;700&family=Nunito+Sans:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Tangerine:wght@400;700&family=Cinzel:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Oswald:wght@400;700&family=Inter:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
     
@@ -26,7 +26,6 @@
             --line-height: 1.6;
         }
 
-        /* Themes */
         .theme-dark { --bg-color: #1f1f1f; --content-bg: #2b2b2b; --text-color: #e0e0e0; --header-bg: #2b2b2b; --header-text: #e0e0e0; --link-hover: #4285f4; --table-bg: #3a3a3a; --toc-bg: #3a3a3a; --toc-hover: #4a4a4a; }
         .theme-midnight { --bg-color: #000000; --content-bg: #121212; --text-color: #ffffff; --header-bg: #121212; --header-text: #ffffff; --link-hover: #8ab4f8; --table-bg: #1a1a1a; --toc-bg: #1a1a1a; --toc-hover: #2a2a2a; }
         
@@ -42,12 +41,34 @@
         }
         p { font-weight: 400; }
 
-        /* Header */
-        .header { background-color: var(--header-bg); color: var(--header-text); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header-left { display: flex; align-items: center; }
-        .search-container { display: flex; align-items: center; flex-grow: 1; max-width: calc(100% - 100px); }
-        #search-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; width: 100%; background-color: var(--content-bg); color: var(--text-color); margin-left: 15px; }
-        #search-button { padding: 8px 15px; background-color: var(--link-hover); color: var(--header-text); border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; margin-right: 15px; white-space: nowrap; }
+        /* Header - Full Width Search */
+        .header { 
+            background-color: var(--header-bg); color: var(--header-text); padding: 15px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 100; border-bottom: none; box-shadow: none; 
+        }
+        
+        .header-left { 
+            display: flex; align-items: center; 
+            flex-grow: 1; /* Allow left section to grow */
+            margin-right: 15px; /* Space between search and settings button */
+        }
+        
+        .search-container { 
+            display: flex; align-items: center; 
+            flex-grow: 1; /* Allow search container to fill available space */
+            max-width: none; /* Remove width restriction */
+        }
+        
+        #search-input { 
+            padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; 
+            font-size: 1em; 
+            width: 100%; /* Input fills container */
+            background-color: var(--content-bg); color: var(--text-color); margin-left: 15px; 
+        }
+        
+        #search-button { padding: 8px 15px; background-color: var(--link-hover); color: var(--header-text); border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; white-space: nowrap; }
+        
         .menu-button { background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; }
 
         /* Menus */
@@ -75,11 +96,8 @@
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; 
             text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
-            /* CRITICAL FIX: REMOVE ALL BORDERS AND LINES */
             border: none !important;
-            outline: none !important;
             box-shadow: none !important;
-            text-decoration: none !important;
         }
         
         .article-title-container h1 { 
@@ -99,7 +117,6 @@
         .content-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; padding-top: 0; }
         #article-content { background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); max-width: var(--max-width); width: 100%; box-sizing: border-box; font-size: var(--font-size); color: var(--text-color); }
         
-        /* LINK FIX: Pointer cursor to show interactivity */
         #article-content a { color: inherit; text-decoration: underline; cursor: pointer; }
         #article-content a:hover { color: var(--link-hover); }
 
@@ -246,7 +263,6 @@
             .catch(error => { clearTimeout(id); throw error; });
     }
 
-    // Theme & Settings Logic
     function applyTheme(themeClass) { body.className = themeClass; localStorage.setItem('wikiReaderTheme', themeClass); }
     document.querySelectorAll('.theme-select-btn').forEach(button => button.addEventListener('click', () => applyTheme(button.getAttribute('data-theme'))));
     const savedTheme = localStorage.getItem('wikiReaderTheme') || 'theme-light';
@@ -354,8 +370,6 @@
             articleContentDiv.innerHTML = finalContent;
             fixContent();
             generateTOC();
-            // Use Event Delegation for all links
-            articleContentDiv.addEventListener('click', handleLinkClick);
             window.scrollTo(0,0);
             localStorage.setItem('lastArticle', title);
 
@@ -391,17 +405,26 @@
 
         articleContentDiv.querySelectorAll('.mw-editsection, .reference, .mw-references-wrap, .navbox, .vertical-navbox, .noprint, .printfooter, .metadata, .ambox, .portal, .hatnote, .mw-default-size, noscript').forEach(el=>el.remove());
         
-        // PREPARE LINKS: Neutralize them so they can be handled by the delegation listener
+        // PREPARE LINKS FOR DELEGATION
         articleContentDiv.querySelectorAll('a').forEach(a => {
             const href = a.getAttribute('href') || '';
+            let title = null;
+
+            // Check for standard wiki links /wiki/Title
             if(href.startsWith('/wiki/')) {
-                const titleMatch = href.match(/\/wiki\/([^?#]+)/) || [null, '']; 
-                const title = decodeURIComponent(titleMatch[1] || href.substring(6)).replace(/_/g,' ');
+                title = decodeURIComponent(href.replace('/wiki/', '')).replace(/_/g, ' ');
+            } 
+            // Check for REST API links ./Title
+            else if(href.startsWith('./')) {
+                title = decodeURIComponent(href.replace('./', '')).replace(/_/g, ' ');
+            }
+
+            if(title) {
                 a.setAttribute('data-article', title);
-                a.setAttribute('href', 'javascript:void(0)'); // Prevent navigation
+                a.setAttribute('href', 'javascript:void(0)'); // Kill default navigation
                 a.classList.add('wiki-link');
             } else if(href.startsWith('#')) {
-                // keep anchors
+                // anchors stay
             } else {
                 a.setAttribute('target', '_blank');
             }
@@ -422,4 +445,41 @@
             tocHtml += `<li class="${heading.tagName.toLowerCase()}"><a href="#${id}">${txt}</a></li>`;
         });
         tocHtml += '</ul>';
-        tocListContainer.innerHTML = tocHtml
+        tocListContainer.innerHTML = tocHtml;
+        tocListContainer.querySelectorAll('a').forEach(a=>{
+            a.addEventListener('click', e=>{
+                e.preventDefault();
+                const targetId = a.getAttribute('href').substring(1);
+                const el = document.getElementById(targetId);
+                if(el) el.scrollIntoView({behavior:'smooth'});
+                tocMenu.classList.remove('open');
+            });
+        });
+    }
+
+    // GLOBAL LINK HANDLER (Delegation)
+    articleContentDiv.addEventListener('click', function(e) {
+        const link = e.target.closest('a.wiki-link');
+        if(link) {
+            e.preventDefault();
+            const title = link.getAttribute('data-article');
+            if(title) {
+                searchInput.value = title;
+                fetchArticle(title);
+            }
+        }
+    });
+
+    searchButton.addEventListener('click', ()=>{
+        const title = searchInput.value.trim();
+        if(title) fetchArticle(title);
+    });
+    searchInput.addEventListener('keypress', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchButton.click(); } });
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const savedArticle = localStorage.getItem('lastArticle');
+        fetchArticle(savedArticle || 'Cat');
+    });
+    </script>
+</body>
+</html>
