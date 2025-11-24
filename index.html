@@ -41,17 +41,12 @@
         }
         p { font-weight: 400; }
 
-        /* Header */
-        .header { 
-            background-color: var(--header-bg); color: var(--header-text); padding: 15px 20px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 100; 
-            border: none !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-        }
-        .header-left { display: flex; align-items: center; flex-grow: 1; margin-right: 15px; }
-        .search-container { display: flex; align-items: center; flex-grow: 1; }
+        /* Header - Shadow Removed */
+        .header { background-color: var(--header-bg); color: var(--header-text); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: none; box-shadow: none; }
+        .header-left { display: flex; align-items: center; }
+        .search-container { display: flex; align-items: center; flex-grow: 1; max-width: calc(100% - 100px); }
         #search-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; width: 100%; background-color: var(--content-bg); color: var(--text-color); margin-left: 15px; }
-        #search-button { padding: 8px 15px; background-color: var(--link-hover); color: var(--header-text); border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; white-space: nowrap; }
+        #search-button { padding: 8px 15px; background-color: var(--link-hover); color: var(--header-text); border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; margin-right: 15px; white-space: nowrap; }
         .menu-button { background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; }
 
         /* Menus */
@@ -65,7 +60,7 @@
         .settings-menu .close-btn { left: 25px; }
         #toc-list-container a { text-decoration: underline !important; color: var(--text-color); }
 
-        /* Settings */
+        /* Settings Controls */
         .setting-group { display: flex; flex-direction: column; margin-bottom: 15px; }
         .setting-group label { font-weight: bold; margin-bottom: 5px; color: var(--text-color); }
         .theme-select-btn { padding: 8px 12px; margin: 5px 0; background-color: var(--toc-hover); color: var(--text-color); border: 1px solid var(--toc-hover); border-radius: 5px; cursor: pointer; }
@@ -79,13 +74,19 @@
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; 
             text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
-            border: none !important; box-shadow: none !important; text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
         }
         
+        /* Title: White, Bold, Poppins */
         .article-title-container h1 { 
-            margin: 0; font-size: 4em !important; 
-            font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; 
-            color: white !important; border: none !important;
+            margin: 0; 
+            font-size: 4em !important; 
+            font-family: 'Poppins', sans-serif !important; 
+            font-weight: 700 !important; 
+            color: white !important; 
+            border: none !important;
+            text-decoration: none !important;
         }
 
         .article-info-centered { max-width: var(--max-width); width: 100%; margin: 0 auto; box-sizing: border-box; padding: 10px 30px; text-align: center; }
@@ -207,250 +208,4 @@
     <div class="content-container-outer">
         <div id="article-info" class="article-info-centered">
             <p id="article-description" class="article-description" style="font-size: 1.2em; font-weight: 400; color: var(--text-color);"></p>
-            <p class="wiki-credit" style="opacity:.85; color: var(--text-color);">From Wikipedia, the free encyclopedia</p>
-        </div>
-    </div>
-
-    <div class="content-container">
-        <div id="article-content">
-            <div class="loading">Search above to load a Wikipedia article.</div>
-        </div>
-    </div>
-
-    <script>
-    const root = document.documentElement;
-    const body = document.body;
-    const articleContentDiv = document.getElementById('article-content');
-    const articleTitleHeader = document.getElementById('article-title-text');
-    const articleDescription = document.getElementById('article-description');
-    const heroImage = document.getElementById('hero-image');
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-    const tocListContainer = document.getElementById('toc-list-container');
-    const articleInfoDiv = document.getElementById('article-info');
-
-    // Use the robust Action API with origin=* for CORS
-    const WIKI_API_URL = 'https://en.wikipedia.org/w/api.php';
-
-    function applyTheme(themeClass) { body.className = themeClass; localStorage.setItem('wikiReaderTheme', themeClass); }
-    document.querySelectorAll('.theme-select-btn').forEach(button => button.addEventListener('click', () => applyTheme(button.getAttribute('data-theme'))));
-    const savedTheme = localStorage.getItem('wikiReaderTheme') || 'theme-light';
-    applyTheme(savedTheme);
-
-    const controls = [
-        { id: 'font-select', prop: '--main-font', unit: '', valueId: null },
-        { id: 'font-size-range', prop: '--font-size', unit: 'em', valueId: 'font-size-value' },
-        { id: 'page-width-range', prop: '--max-width', unit: 'px', valueId: 'page-width-value' },
-        { id: 'hero-height-range', prop: '--hero-height', unit: 'px', valueId: 'hero-height-value' },
-        { id: 'kerning-range', prop: '--kerning', unit: 'em', valueId: 'kerning-value' },
-        { id: 'line-height-range', prop: '--line-height', unit: '', valueId: 'line-height-value' }
-    ];
-    controls.forEach(control => {
-        const element = document.getElementById(control.id);
-        if (element) {
-            element.addEventListener('input', (e) => {
-                const value = e.target.value;
-                root.style.setProperty(control.prop, value + control.unit);
-                if (control.valueId) document.getElementById(control.valueId).textContent = value;
-                localStorage.setItem(control.prop, value);
-            });
-            const savedValue = localStorage.getItem(control.prop);
-            if (savedValue) {
-                element.value = savedValue;
-                root.style.setProperty(control.prop, savedValue + control.unit);
-                if (control.valueId) document.getElementById(control.valueId).textContent = savedValue;
-            }
-        }
-    });
-
-    const tocMenu = document.getElementById('toc-menu');
-    const settingsMenu = document.getElementById('settings-menu');
-    document.getElementById('menu-open-btn').onclick = () => settingsMenu.classList.add('open');
-    document.getElementById('menu-close-btn').onclick = () => settingsMenu.classList.remove('open');
-    document.getElementById('toc-open-btn').onclick = () => tocMenu.classList.add('open');
-    document.getElementById('toc-close-btn').onclick = () => tocMenu.classList.remove('open');
-    document.addEventListener('click', (e) => {
-        if (articleContentDiv.contains(e.target) || articleInfoDiv.contains(e.target)) {
-            settingsMenu.classList.remove('open'); tocMenu.classList.remove('open');
-        }
-    }, true);
-
-    function showError(message, detail, failedTitle){
-        heroImage.src = '';
-        articleTitleHeader.textContent = 'Error';
-        articleDescription.style.display = 'none';
-        articleInfoDiv.querySelector('.wiki-credit').style.display = 'none';
-        tocListContainer.innerHTML = '<p style="opacity:.7">Error.</p>';
-        let errorHTML = `<div class="loading" style="color:#a00"><h2>⚠️ Error</h2><p>${message}</p><p style="opacity:.8">${detail||''}</p></div>`;
-        if (failedTitle) {
-            const searchUrl = 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(failedTitle);
-            errorHTML += `<p style="text-align:center; font-size:1.1em;">Try searching directly on Wikipedia: <a href="${searchUrl}" target="_blank" rel="noopener" style="color:var(--link-hover);">Search for "${failedTitle}"</a></p>`;
-        }
-        articleContentDiv.innerHTML = errorHTML;
-    }
-
-    async function fetchArticle(title){
-        if(!title) return;
-        articleContentDiv.innerHTML = '<div class="loading">Loading article...</div>';
-        articleTitleHeader.textContent = 'Loading...';
-        articleDescription.textContent = '';
-        heroImage.src = '';
-        tocListContainer.innerHTML = '<p style="opacity:.7">Loading contents...</p>';
-
-        // Using Action API - Most Reliable and Standard
-        const params = new URLSearchParams({
-            action: 'parse',
-            page: title,
-            prop: 'text|pageimages|description',
-            pithumbsize: '800',
-            format: 'json',
-            formatversion: '2',
-            redirects: '1',
-            origin: '*' // Crucial for CORS
-        });
-
-        try {
-            const response = await fetch(`${WIKI_API_URL}?${params.toString()}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const data = await response.json();
-
-            if (data.error) {
-                return showError('Article not found', data.error.info, title);
-            }
-
-            const parse = data.parse;
-            articleTitleHeader.textContent = parse.title;
-            document.title = parse.title + ' - Minimal Wikipedia Reader';
-            
-            if (parse.description) {
-                articleDescription.textContent = parse.description;
-                articleDescription.style.display = 'block';
-                articleInfoDiv.querySelector('.wiki-credit').style.display = 'block';
-            } else {
-                articleDescription.style.display = 'none';
-            }
-
-            // Image handling logic for Action API
-            if(parse.pageimage) {
-                // We have to build the URL or use the one if provided (v2 often provides source)
-                // Check if pageimages prop gave us a thumbnail in the response structure (Action API sometimes needs generator for this, but parse returns it if simple)
-                // Since we requested pithumbsize, parse structure usually has it? Actually parse doesn't always return thumbnail in top level
-                // Fallback: Build standard URL from name
-                const imgName = parse.pageimage;
-                // Very simple hash calc for wiki images is complex in JS, so we rely on what we got or leave blank
-                // For stability, if we don't have a direct URL, we skip. 
-                // Wait, Action API parse DOES NOT return thumbnail url directly in v2 easily without generator.
-                // We will try a separate lightweight call for the image if needed, OR just skip for stability. 
-                // Let's skip complexity: if no URL is readily available, no hero.
-                heroImage.src = ''; // Reset
-            }
-
-            // Content
-            const htmlText = parse.text;
-            articleContentDiv.innerHTML = htmlText;
-
-            fixContent();
-            generateTOC();
-            window.scrollTo(0,0);
-            localStorage.setItem('lastArticle', title);
-
-        } catch (err) {
-            console.error(err);
-            showError('Network or parsing error', err.message, title);
-        }
-    }
-    
-    function fixContent(){
-        const sectionsToRemove = ['References', 'See also', 'External links', 'Further reading'];
-        sectionsToRemove.forEach(text => {
-            articleContentDiv.querySelectorAll(`h2, h3`).forEach(h => {
-                if(h.textContent.replace(/\[edit\]/g,'').trim() === text) {
-                    let next = h.nextElementSibling;
-                    while(next && next.tagName !== 'H2' && next.tagName !== 'H3') {
-                        const toRemove = next; next = next.nextElementSibling; toRemove.remove();
-                    }
-                    h.remove();
-                }
-            });
-        });
-
-        articleContentDiv.querySelectorAll('img').forEach(img=>{
-            const src = img.getAttribute('src') || '';
-            if(src.startsWith('//')) img.src = window.location.protocol + src;
-            else if(src.startsWith('/')) img.src = 'https://en.wikipedia.org' + src;
-            img.removeAttribute('srcset'); img.removeAttribute('sizes');
-        });
-        
-        const seriesBoxes = articleContentDiv.querySelectorAll('.series-box, .series-series, table.series, .series-series-box, .serieslist, .navbox-inner');
-        seriesBoxes.forEach(box => { box.remove(); articleContentDiv.appendChild(box); });
-
-        // Cleanup
-        articleContentDiv.querySelectorAll('.mw-editsection, .reference, .mw-references-wrap, .navbox, .vertical-navbox, .noprint, .printfooter, .metadata, .ambox, .portal, .hatnote, .mw-default-size, noscript').forEach(el=>el.remove());
-    }
-
-    function generateTOC(){
-        const headings = articleContentDiv.querySelectorAll('h2, h3');
-        if(!headings || headings.length===0){
-            tocListContainer.innerHTML = '<p style="opacity:.7">No sections found for this article.</p>';
-            return;
-        }
-        let tocHtml = '<ul class="toc-list">';
-        headings.forEach((heading, i)=>{
-            const txt = heading.textContent.replace(/\[edit\]/g,'').trim();
-            if(!txt.match(/References|See also|External links|Further reading/i)){
-                const id = heading.id || ('section-' + i);
-                heading.id = id;
-                tocHtml += `<li class="${heading.tagName.toLowerCase()}"><a href="#${id}">${txt}</a></li>`;
-            }
-        });
-        tocHtml += '</ul>';
-        tocListContainer.innerHTML = tocHtml;
-        tocListContainer.querySelectorAll('a').forEach(a=>{
-            a.addEventListener('click', e=>{
-                e.preventDefault();
-                const targetId = a.getAttribute('href').substring(1);
-                const el = document.getElementById(targetId);
-                if(el) el.scrollIntoView({behavior:'smooth'});
-                tocMenu.classList.remove('open');
-            });
-        });
-    }
-
-    // EVENT DELEGATION FOR LINKS (The Fix)
-    articleContentDiv.addEventListener('click', function(e) {
-        // Find closest anchor tag
-        const link = e.target.closest('a');
-        if (link) {
-            const href = link.getAttribute('href');
-            
-            // 1. If it's a wiki link (/wiki/...)
-            if (href && href.startsWith('/wiki/')) {
-                e.preventDefault();
-                const title = decodeURIComponent(href.replace('/wiki/', '')).replace(/_/g, ' ');
-                searchInput.value = title;
-                fetchArticle(title);
-            }
-            // 2. If it's an anchor link (#...)
-            else if (href && href.startsWith('#')) {
-                // Let default behavior happen (scrolling)
-            }
-            // 3. If it's external
-            else {
-                link.setAttribute('target', '_blank');
-            }
-        }
-    });
-
-    searchButton.addEventListener('click', ()=>{
-        const title = searchInput.value.trim();
-        if(title) fetchArticle(title);
-    });
-    searchInput.addEventListener('keypress', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchButton.click(); } });
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-        const savedArticle = localStorage.getItem('lastArticle');
-        fetchArticle(savedArticle || 'Cat');
-    });
-    </script>
-</body>
-</html>
+            <p class="wiki-credit" style="opacity:.85; color: var(--text-color);">From Wikipedia, the
