@@ -77,7 +77,6 @@
             z-index: 100;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        /* ... (rest of header/search styles remain the same) ... */
         .header-left { display: flex; align-items: center; }
         .search-container { display: flex; align-items: center; flex-grow: 1; max-width: calc(100% - 100px); }
         #search-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; width: 100%; background-color: var(--content-bg); color: var(--text-color); margin-left: 15px; }
@@ -148,33 +147,34 @@
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; color: white; 
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
-            /* Fix: ensure no border is visible */
+            /* Fix: ensure no border/line is visible */
             border-top: none !important;
             border-bottom: none !important; 
         }
         
-        /* Fix: Title on top of page should be in Roboto */
+        /* Fix: Title on top of page should be in Poppins and larger */
         .article-title-container h1 { 
-            margin: 0; font-size: 3em; 
-            font-family: 'Roboto', sans-serif !important; 
+            margin: 0; 
+            font-size: 3.5em !important; /* Made larger */
+            font-family: 'Poppins', sans-serif !important; 
         }
         .article-description, .wiki-credit { display: none; } /* Moved outside hero */
 
-        /* Fix: Article Info Centering/Placement */
+        /* Article Info Centering/Placement */
         .article-info-centered {
             max-width: var(--max-width);
             width: 100%;
-            margin: 0 auto; /* Center it */
+            margin: 0 auto; 
             box-sizing: border-box;
-            padding: 0 30px; /* Match content padding */
+            padding: 0 30px; 
         }
         
         .content-container { 
             display: flex; 
-            flex-direction: column; /* Ensure children stack vertically */
-            align-items: center; /* Center them horizontally */
+            flex-direction: column; 
+            align-items: center; 
             padding: 40px 20px; 
-            padding-top: 0; /* No extra padding on top since info block is above */
+            padding-top: 0; 
         }
         #article-content {
             background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -186,12 +186,12 @@
         /* --- Section Title Fixes --- */
         #article-content h2, #article-content h3 {
             font-family: 'Poppins', sans-serif !important;
-            color: var(--text-color) !important; /* Fix: ensures dark mode text is correct */
+            color: var(--text-color) !important; 
             margin-top: 1.5em;
             padding-bottom: 0.1em;
         }
-        #article-content h2 { font-size: 1.8em !important; } /* Fix: larger font */
-        #article-content h3 { font-size: 1.5em !important; } /* Fix: larger font */
+        #article-content h2 { font-size: 1.8em !important; } 
+        #article-content h3 { font-size: 1.5em !important; } 
 
         /* --- Image/Caption Fixes --- */
         
@@ -204,7 +204,7 @@
             padding: 0 !important;
             margin: 2em auto !important; /* Center the larger block */
             float: none !important; /* Remove floating for a cleaner block layout */
-            /* Increase the wrapper width to approximately 3x a typical thumbnail (220px * 3 = 660px) */
+            /* Aggressively set to 3x standard thumbnail size (~220px * 3 = 660px) */
             width: 660px !important; 
             max-width: 90% !important; /* Ensure it doesn't overflow small screens */
             height: auto !important;
@@ -223,8 +223,8 @@
         
         /* Fix: Caption should be centered and italic */
         #article-content figcaption, #article-content .thumbcaption {
-            font-style: italic;
-            text-align: center;
+            font-style: italic !important;
+            text-align: center !important;
             font-size: 0.9em;
             color: var(--text-color);
             border: none !important;
@@ -253,11 +253,11 @@
         .loading { text-align: center; padding: 50px; font-size: 1.5em; color: var(--text-color); }
         @media (max-width: 600px) {
             .settings-menu.open, .toc-menu.open { width: 100%; }
-            .article-title-container h1 { font-size: 2em; }
+            .article-title-container h1 { font-size: 2.5em !important; }
             #article-content .infobox { float: none; margin: 1em auto; width: 90%; max-width: 90% !important; }
-            /* Triple size might be too much for mobile, adjust down to 1.5x on small screens */
+            /* Triple size might be too much for mobile, adjust down on small screens */
             #article-content .thumb, #article-content .tright, #article-content .tleft, #article-content figure {
-                 width: 450px !important; /* 220px * 1.5 ~ 330px, let's keep it max-width 90% */
+                 width: 90% !important; 
             }
         }
     </style>
@@ -573,14 +573,14 @@
             img.removeAttribute('sizes');
         });
 
-        // Links: convert /wiki/ links to internal handlers; external links open in new tab
+        // Links: convert /wiki/ links to internal handlers, and REMOVE the original href
         articleContentDiv.querySelectorAll('a').forEach(a=>{
             const href = a.getAttribute('href') || '';
             if(href.startsWith('/wiki/')){
                 const title = decodeURIComponent(href.replace('/wiki/','')).replace(/_/g,' ');
                 a.setAttribute('data-article', title);
-                a.removeAttribute('href');
-                a.classList.add('wiki-link'); // Fix: link functionality handled by listener
+                a.removeAttribute('href'); // <-- FIX: This prevents navigation to wikipedia.com
+                a.classList.add('wiki-link'); 
             } else if(href.startsWith('#')){
                 // keep as-is for in-page anchors
             } else if(href.startsWith('http') || href.startsWith('//')){
@@ -589,8 +589,8 @@
             }
         });
 
-        // Minimal cleanup for boilerplate
-        articleContentDiv.querySelectorAll('.mw-editsection, .reference, .mw-references-wrap, .navbox, .vertical-navbox, .noprint, .printfooter, .metadata').forEach(el=>el.remove());
+        // Minimal cleanup for boilerplate and broken interactive elements (like maps)
+        articleContentDiv.querySelectorAll('.mw-editsection, .reference, .mw-references-wrap, .navbox, .vertical-navbox, .noprint, .printfooter, .metadata, .ambox, .portal, .hatnote, .mw-default-size, noscript, table.box-Multiple-issues, table.rellink, figure.embeded, .haverty').forEach(el=>el.remove());
     }
 
     function generateTOC(){
@@ -602,7 +602,7 @@
         let tocHtml = '<ul class="toc-list">';
         headings.forEach((heading, i)=>{
             const txt = heading.textContent.replace(/\[edit\]/g,'').trim();
-            // Skip common footer sections in TOC (though we already remove them in fixContent)
+            // Skip common footer sections in TOC 
             if(!txt.match(/References|See also|External links|Further reading/i)){
                 const id = heading.id || ('section-' + i + '-' + txt.replace(/[^a-z0-9]+/ig,'-').toLowerCase());
                 heading.id = id;
@@ -623,6 +623,7 @@
     }
 
     function setupLinkListeners(){
+        // Fix: Use the wiki-link class to listen for internal navigation clicks
         articleContentDiv.querySelectorAll('.wiki-link').forEach(link=>{
             link.addEventListener('click', e=>{
                 e.preventDefault();
@@ -642,7 +643,9 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', ()=>{
-        fetchArticle('Cat');
+        // Apply saved settings
+        const savedArticle = localStorage.getItem('lastArticle');
+        fetchArticle(savedArticle || 'Cat');
     });
     </script>
 </body>
