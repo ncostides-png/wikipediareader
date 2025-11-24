@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Wikipedia Reader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Nunito+Sans:wght@400;700&family=Roboto:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Default Light Theme Variables */
+            --bg-color: #f8f8f8;
+            --content-bg: white;
+            --text-color: #333;
+            --header-bg: #333;
+            --header-text: white;
+            --link-hover: #007bff;
+            --table-bg: #f9f9f9;
+            --toc-bg: #eee;
+            --toc-hover: #ddd;
+
+            /* Default customization variables */
+            --main-font: 'Georgia', serif;
+            --font-size: 1.15em;
+            --max-width: 750px;
+            --hero-height: 400px;
+            --kerning: 0em;
+            --line-height: 1.6;
+        }
+
+        /* --- Dark Theme Definitions --- */
+        .theme-dark {
+            --bg-color: #1f1f1f; 
+            --content-bg: #2b2b2b; 
+            --text-color: #e0e0e0; 
+            --header-bg: #2b2b2b;
+            --header-text: #e0e0e0;
+            --link-hover: #4285f4; 
+            --table-bg: #3a3a3a;
+            --toc-bg: #3a3a3a;
+            --toc-hover: #4a4a4a;
+        }
+        .theme-midnight {
+            --bg-color: #000000; 
+            --content-bg: #121212; 
+            --text-color: #ffffff; 
+            --header-bg: #121212;
+            --header-text: #ffffff;
+            --link-hover: #8ab4f8; 
+            --table-bg: #1a1a1a;
+            --toc-bg: #1a1a1a;
+            --toc-hover: #2a2a2a;
+        }
+        
+        body {
+            font-family: var(--main-font);
+            line-height: var(--line-height);
+            letter-spacing: var(--kerning);
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- Header & Search Bar --- */
+        .header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header-left { display: flex; align-items: center; }
+        .search-container { display: flex; align-items: center; flex-grow: 1; max-width: calc(100% - 100px); }
+        #search-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; font-size: 1em; width: 100%; background-color: var(--content-bg); color: var(--text-color); margin-left: 15px; }
+        #search-button { padding: 8px 15px; background-color: var(--link-hover); color: var(--header-text); border: none; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 1em; margin-right: 15px; white-space: nowrap; }
+        .menu-button { background: none; border: none; color: white; font-size: 1.5em; cursor: pointer; }
+        
+        /* --- Menu & TOC Styling --- */
+        .toc-menu, .settings-menu {
+            height: 100%; width: 0; position: fixed; z-index: 200; top: 0; 
+            overflow-x: hidden; overflow-y: auto; transition: 0.5s; padding-top: 60px;
+        }
+        .toc-menu { left: 0; background-color: var(--toc-bg); border-right: 1px solid #ddd; box-shadow: 3px 0 10px rgba(0,0,0,0.1); }
+        .settings-menu { right: 0; background-color: var(--content-bg); border-left: 1px solid #ddd; box-shadow: -3px 0 10px rgba(0,0,0,0.1); }
+        .toc-menu.open, .settings-menu.open { width: 300px; padding: 60px 20px 20px; }
+        .toc-list { list-style: none; padding: 0; }
+        .toc-menu .close-btn, .settings-menu .close-btn { position: absolute; top: 0; font-size: 36px; color: var(--text-color); text-decoration: none; }
+        .toc-menu .close-btn { right: 25px; }
+        .settings-menu .close-btn { left: 25px; margin-left: 50px; }
+        
+        /* Settings Controls */
+        .settings-menu label, .settings-menu select, .settings-menu input { display: block; margin-bottom: 10px; width: 100%; box-sizing: border-box; color: var(--text-color); }
+        .settings-menu select { background-color: var(--table-bg); color: var(--text-color); padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .settings-menu input[type="range"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .theme-select-btn { padding: 10px; margin-bottom: 5px; width: 100%; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        #theme-light-btn { background-color: #eee; color: #333; }
+        #theme-dark-btn { background-color: #3a3a3a; color: #e0e0e0; }
+        #theme-midnight-btn { background-color: #121212; color: #ffffff; border: 1px solid #555;}
+        
+        /* --- Hero Section & Content --- */
+        .hero { height: var(--hero-height); position: relative; overflow: hidden; background-color: #444; }
+        #hero-image { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
+        .article-title-container { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; color: white; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); text-align: center; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); }
+        .article-title-container h1 { margin: 0; font-size: 3em; }
+        .article-description { font-size: 1.2em; margin-top: 5px; margin-bottom: 5px; font-weight: 400; }
+        .content-container { display: flex; justify-content: center; padding: 40px 20px; }
+        #article-content {
+            background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: var(--max-width); width: 100%; box-sizing: border-box; font-size: var(--font-size); color: var(--text-color);
+        }
+        #article-content a { color: inherit; text-decoration: underline; }
+        #article-content a:hover { color: var(--link-hover); }
+        #article-content img { max-width: 100%; height: auto; display: block; margin: 1em auto; border-radius: 10px; object-fit: contain; }
+        
+        /* Tables and Infoboxes */
+        #article-content .infobox, #article-content table {
+            font-family: Arial, Helvetica, sans-serif !important; font-size: 0.9em; border-collapse: collapse;
+            margin: 1em auto; background-color: var(--table-bg) !important; color: var(--text-color);
+        }
+        #article-content .infobox { float: right; clear: right; margin: 0.5em 0 0.5em 1em; border: 1px solid var(--text-color); padding: 0.2em; width: 300px; max-width: 40% !important; box-sizing: border-box; }
+        #article-content .infobox th, #article-content .infobox td, #article-content table th, #article-content table td { border: 1px solid var(--text-color); padding: 0.3em; }
+        #article-content .infobox, #article-content table:not(.navbox):not(.vertical-navbox) { display: table !important; }
+
+        /* Minimal CSS Hiding for Stability */
+        #article-content .mw-editsection,
+        #article-content .printfooter,
+        #article-content .dablink {
+            display: none !important;
+        }
+
+        .loading { text-align: center; padding: 50px; font-size: 1.5em; color: var(--text-color); }
+        @media (max-width: 600px) {
+            .settings-menu.open, .toc-menu.open { width: 100%; }
+            .article-title-container h1 { font-size: 2em; }
+            #article-content .infobox { float: none; margin: 1em auto; width: 90%; max-width: 90% !important; }
+        }
+    </style>
+</head>
+<body class="theme-light">
+
+    <div class="header">
+        <div class="header-left">
+             <button class="menu-button" id="toc-open-btn">☰</button>
+             <div class="search-container">
+                 <input type="text" id="search-input" placeholder="Search Wikipedia...">
+                 <button id="search-button">Go</button>
+             </div>
+        </div>
+        <button class="menu-button" id="menu-open-btn">⚙️</button>
+    </div>
+
+    <div id="toc-menu" class="toc-menu">
+        <a href="javascript:void(0)" class="close-btn" id="toc-close-btn">&times;</a>
+        <h2 style="padding:0 20px">Table of Contents</h2>
+        <div id="toc-list-container" style="padding:10px">
+            <p style="opacity:.7">No article loaded yet.</p>
+        </div>
+    </div>
+
+
+    <div id="settings-menu" class="settings-menu">
+        <a href="javascript:void(0)" class="close-btn" id="menu-close-btn">&times;</a>
+        <h2 style="padding:0 20px">Reading Settings</h2>
+        <div style="padding:10px">
+            <h3>Theme</h3>
+            <button id="theme-light-btn" class="theme-select-btn" data-theme="theme-light">💡 Light Theme</button>
+            <button id="theme-dark-btn" class="theme-select-btn" data-theme="theme-dark">🌙 Dark Theme (Gemini-style)</button>
+            <button id="theme-midnight-btn" class="theme-select-btn" data-theme="theme-midnight">🌑 Midnight Theme</button>
+
+            <hr style="border-color: var(--text-color); opacity: 0.1;">
+
+            <h3>Typography</h3>
+            <label for="font-select">Font Face:</label>
+            <select id="font-select">
+                <option value="'Georgia', serif">Georgia (Default)</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Arial', sans-serif">Arial</option>
+                <option value="'Verdana', sans-serif">Verdana</option>
+                <option value="'Raleway', sans-serif">Raleway</option>
+                <option value="'Nunito Sans', sans-serif">Nunito Sans</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+            </select>
+
+            <label for="font-size-range">Font Size: <span id="font-size-value">1.15</span>em</label>
+            <input type="range" id="font-size-range" min="0.8" max="1.6" step="0.05" value="1.15">
+
+            <label for="kerning-range">Kerning (Letter Spacing): <span id="kerning-value">0.0</span>em</label>
+            <input type="range" id="kerning-range" min="-0.05" max="0.1" step="0.01" value="0.0">
+
+            <label for="line-height-range">Line Height: <span id="line-height-value">1.6</span></label>
+            <input type="range" id="line-height-range" min="1.0" max="2.5" step="0.1" value="1.6">
+            
+            <hr style="border-color: var(--text-color); opacity: 0.1;">
+
+            <h3>Layout</h3>
+            <label for="page-width-range">Page Width: <span id="page-width-value">750</span>px</label>
+            <input type="range" id="page-width-range" min="400" max="1000" step="10" value="750">
+
+            <label for="hero-height-range">Hero Image Height: <span id="hero-height-value">400</span>px</label>
+            <input type="range" id="hero-height-range" min="200" max="800" step="20" value="400">
+        </div>
+    </div>
+
+    <div class="hero">
+        <img id="hero-image" src="" alt="Hero Image">
+        <div class="article-title-container">
+            <h1 id="article-title-text">Minimal Wikipedia Reader</h1>
+            <p id="article-description" class="article-description"></p>
+            <p class="wiki-credit" style="opacity:.85">From Wikipedia, the free encyclopedia</p>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <div id="article-content">
+            <div class="loading">Search above to load a Wikipedia article.</div>
+        </div>
+    </div>
+
+    <script>
+    const root = document.documentElement;
+    const body = document.body;
+    const articleContentDiv = document.getElementById('article-content');
+    const articleTitleHeader = document.getElementById('article-title-text');
+    const articleDescription = document.getElementById('article-description');
+    const heroImage = document.getElementById('hero-image');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const tocListContainer = document.getElementById('toc-list-container');
+    
+    // --- UPDATED WIKI API ENDPOINTS (CORS-friendly) ---
+    const WIKI_REST_HTML = 'https://en.wikipedia.org/api/rest_v1/page/html/';
+    const WIKI_REST_SUMMARY = 'https://en.wikipedia.org/api/rest_v1/page/summary/';
+
+    // --- Customization Logic (Restored from prior versions) ---
+    function applyTheme(themeClass) {
+        body.className = themeClass;
+        localStorage.setItem('wikiReaderTheme', themeClass);
+    }
+    document.querySelectorAll('.theme-select-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            applyTheme(button.getAttribute('data-theme'));
+        });
+    });
+    const savedTheme = localStorage.getItem('wikiReaderTheme') || 'theme-light';
+    applyTheme(savedTheme);
+
+    const controls = [
+        { id: 'font-select', prop: '--main-font', unit: '', valueId: null, type: 'select' },
+        { id: 'font-size-range', prop: '--font-size', unit: 'em', valueId: 'font-size-value', type: 'range' },
+        { id: 'page-width-range', prop: '--max-width', unit: 'px', valueId: 'page-width-value', type: 'range' },
+        { id: 'hero-height-range', prop: '--hero-height', unit: 'px', valueId: 'hero-height-value', type: 'range' },
+        { id: 'kerning-range', prop: '--kerning', unit: 'em', valueId: 'kerning-value', type: 'range' },
+        { id: 'line-height-range', prop: '--line-height', unit: '', valueId: 'line-height-value', type: 'range' }
+    ];
+
+    controls.forEach(control => {
+        const element = document.getElementById(control.id);
+        if (element) {
+            element.addEventListener('input', (e) => {
+                const value = e.target.value;
+                root.style.setProperty(control.prop, value + control.unit);
+                if (control.valueId) {
+                    document.getElementById(control.valueId).textContent = value + control.unit.replace(/[a-z]/g, '');
+                }
+                localStorage.setItem(control.prop, value);
+            });
+            const savedValue = localStorage.getItem(control.prop);
+            if (savedValue) {
+                element.value = savedValue;
+                root.style.setProperty(control.prop, savedValue + control.unit);
+                if (control.valueId) {
+                    document.getElementById(control.valueId).textContent = savedValue + control.unit.replace(/[a-z]/g, '');
+                }
+            }
+        }
+    });
+
+    // --- Menu & TOC Toggle Logic ---
+    document.getElementById('menu-open-btn').onclick = ()=>document.getElementById('settings-menu').classList.add('open');
+    document.getElementById('menu-close-btn').onclick = ()=>document.getElementById('settings-menu').classList.remove('open');
+    document.getElementById('toc-open-btn').onclick = ()=>document.getElementById('toc-menu').classList.add('open');
+    document.getElementById('toc-close-btn').onclick = ()=>document.getElementById('toc-menu').classList.remove('open');
+
+
+    function showError(message, detail){
+        articleContentDiv.innerHTML = `<div class="loading" style="color:#a00"><h2>⚠️ Error</h2><p>${message}</p><p style="opacity:.8">${detail||''}</p></div>`;
+        heroImage.src = '';
+        articleTitleHeader.textContent = 'Error';
+        articleDescription.textContent = '';
+        tocListContainer.innerHTML = '<p style="opacity:.7">Error.</p>';
+    }
+
+    // --- Core Article Fetching (CORS/REST) ---
+    async function fetchArticle(title){
+        if(!title) return;
+        articleContentDiv.innerHTML = '<div class="loading">Loading article...</div>';
+        articleTitleHeader.textContent = 'Loading...';
+        articleDescription.textContent = '';
+        heroImage.src = '';
+        tocListContainer.innerHTML = '<p style="opacity:.7">Loading contents...</p>';
+
+        // Use the title directly for encoding
+        const encoded = encodeURIComponent(title.replace(/\s+/g,'_'));
+
+        try{
+            // 1) Fetch summary (metadata + thumbnail) using REST summary
+            const summaryResp = await fetch(WIKI_REST_SUMMARY + encoded, {mode:'cors'});
+            if(!summaryResp.ok){
+                if(summaryResp.status===404) return showError('Article not found','Try a different search term.');
+                throw new Error('Summary fetch failed: ' + summaryResp.status);
+            }
+            const summary = await summaryResp.json();
+
+            // Update title/description/hero image
+            articleTitleHeader.textContent = summary.title || title;
+            document.title = (summary.title || title) + ' - Minimal Wikipedia Reader';
+            articleDescription.textContent = summary.description || summary.extract || '';
+            if(summary.thumbnail && summary.thumbnail.source){
+                heroImage.src = summary.thumbnail.source;
+            } else {
+                heroImage.src = '';
+            }
+
+            // 2) Fetch the page HTML via REST 
+            const htmlResp = await fetch(WIKI_REST_HTML + encoded, {mode:'cors'});
+            if(!htmlResp.ok){
+                throw new Error('HTML fetch failed: ' + htmlResp.status);
+            }
+            const htmlText = await htmlResp.text();
+
+            // 3) Parse and extract the main content (.mw-parser-output)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlText;
+            const contentWrapper = tempDiv.querySelector('.mw-parser-output') || tempDiv;
+            const finalContent = contentWrapper.innerHTML || '';
+
+            if(!finalContent || finalContent.trim().length < 20){
+                return showError('Content Retrieval Error (Blank Text)','The page returned no main content. It may be a redirect, disambiguation, or protected page.');
+            }
+
+            // 4) Inject cleaned content into the page
+            articleContentDiv.innerHTML = finalContent;
+
+            // 5) Fix relative images/links and setup internal navigation
+            fixContent();
+            generateTOC();
+            setupLinkListeners();
+            window.scrollTo(0,0);
+
+        }catch(err){
+            console.error(err);
+            showError('Network or parsing error','Check the browser console for details. ' + (err.message||''));
+        }
+    }
+    
+    // --- Utility Functions ---
+
+    function fixContent(){
+        // Images: fix relative src, remove srcset to avoid broken links
+        articleContentDiv.querySelectorAll('img').forEach(img=>{
+            const src = img.getAttribute('src') || '';
+            if(src.startsWith('//')) img.src = window.location.protocol + src;
+            else if(src.startsWith('/')) img.src = 'https://en.wikipedia.org' + src;
+            img.removeAttribute('srcset');
+            img.removeAttribute('sizes');
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+        });
+
+        // Links: convert /wiki/ links to internal handlers; make external links open in new tab
+        articleContentDiv.querySelectorAll('a').forEach(a=>{
+            const href = a.getAttribute('href') || '';
+            if(href.startsWith('/wiki/')){
+                const title = decodeURIComponent(href.replace('/wiki/','')).replace(/_/g,' ');
+                a.setAttribute('data-article', title);
+                a.removeAttribute('href');
+                a.classList.add('wiki-link');
+            } else if(href.startsWith('#')){
+                // keep as-is
+            } else if(href.startsWith('http') || href.startsWith('//')){
+                a.setAttribute('target','_blank');
+                a.setAttribute('rel','noopener');
+            }
+        });
+
+        // Remove edit links or other UI bits that clutter reader view
+        articleContentDiv.querySelectorAll('.mw-editsection, .reference, .mw-references-wrap, .navbox, .infobox .plainlist').forEach(el=>{
+            // keep the infobox but visually simplify if desired
+            if(el.classList && el.classList.contains('infobox')) return;
+            el.remove();
+        });
+    }
+
+    function generateTOC(){
+        const headings = articleContentDiv.querySelectorAll('h2, h3');
+        if(!headings || headings.length===0){
+            tocListContainer.innerHTML = '<p style="opacity:.7">No sections found for this article.</p>';
+            return;
+        }
+        let tocHtml = '<ul class="toc-list">';
+        headings.forEach((heading, i)=>{
+            const txt = heading.textContent.replace(/\[edit\]/g,'').trim();
+            if(!txt.match(/References|See also|External links|Further reading/i)){
+                const id = heading.id || ('section-' + i + '-' + txt.replace(/[^a-z0-9]+/ig,'-').toLowerCase());
+                heading.id = id;
+                tocHtml += `<li class="${heading.tagName.toLowerCase()}"><a href="#${id}">${txt}</a></li>`;
+            }
+        });
+        tocHtml += '</ul>';
+        tocListContainer.innerHTML = tocHtml;
+        tocListContainer.querySelectorAll('a').forEach(a=>{
+            a.addEventListener('click', e=>{
+                e.preventDefault();
+                const targetId = a.getAttribute('href').substring(1);
+                const el = document.getElementById(targetId);
+                if(el) el.scrollIntoView({behavior:'smooth'});
+                document.getElementById('toc-menu').classList.remove('open');
+            });
+        });
+    }
+
+    function setupLinkListeners(){
+        articleContentDiv.querySelectorAll('.wiki-link').forEach(link=>{
+            link.addEventListener('click', e=>{
+                e.preventDefault();
+                const articleTitle = e.currentTarget.getAttribute('data-article');
+                searchInput.value = articleTitle;
+                fetchArticle(articleTitle);
+            });
+        });
+    }
+
+    // --- Search Input Handlers ---
+    searchButton.addEventListener('click', ()=>{
+        const title = searchInput.value.trim();
+        if(title) fetchArticle(title);
+    });
+    searchInput.addEventListener('keypress', e=>{ if(e.key==='Enter'){ e.preventDefault(); searchButton.click(); } });
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', ()=>{
+        // Fetch a reliable short page (Cat is a good default for CORS)
+        fetchArticle('Cat');
+    });
+    </script>
+</body>
+</html>
