@@ -61,11 +61,11 @@
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-weight: 400; /* FIX: Ensure default text is not bold */
+            font-weight: 400; 
             transition: background-color 0.3s, color 0.3s;
         }
         p {
-            font-weight: 400; /* FIX: Ensure paragraphs are not bold */
+            font-weight: 400; 
         }
 
 
@@ -150,19 +150,19 @@
         /* Only Page Name stays in the Hero area */
         .article-title-container { 
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; 
-            color: white; /* FIX: Title is white */
+            color: white; 
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); text-align: center; 
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); 
-            /* FIX: Ensure no border/line is visible */
             border: none !important;
         }
         
-        /* FIX: Title in Poppins BOLD and larger */
+        /* FIX: Title in Poppins BOLD, larger, and WHITE (enforced) */
         .article-title-container h1 { 
             margin: 0; 
             font-size: 4em !important; 
             font-family: 'Poppins', sans-serif !important; 
             font-weight: 700 !important; /* Poppins BOLD */
+            color: white !important; /* CRITICAL FIX: Ensure it stays white after loading */
         }
         .article-description, .wiki-credit { display: none; } /* Moved outside hero */
 
@@ -172,7 +172,7 @@
             width: 100%;
             margin: 0 auto; 
             box-sizing: border-box;
-            padding: 10px 30px; /* Reduced vertical padding */
+            padding: 10px 30px; 
             text-align: center; 
         }
         .article-info-centered p {
@@ -191,14 +191,14 @@
             background-color: var(--content-bg); padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             max-width: var(--max-width); width: 100%; box-sizing: border-box; font-size: var(--font-size); color: var(--text-color);
         }
-        #article-content a { color: inherit; text-decoration: underline; cursor: pointer; } /* Added cursor for links */
+        #article-content a { color: inherit; text-decoration: underline; cursor: pointer; } 
         #article-content a:hover { color: var(--link-hover); }
 
         /* --- Section Title Fixes --- */
         #article-content h2, #article-content h3 {
             font-family: 'Poppins', sans-serif !important;
             color: var(--text-color) !important; 
-            font-weight: 700 !important; /* Ensure section titles are bold Poppins */
+            font-weight: 700 !important; 
             margin-top: 1.5em;
             padding-bottom: 0.1em;
         }
@@ -256,7 +256,7 @@
         #article-content .infobox { float: right; clear: right !important; margin: 0.5em 0 0.5em 1em; border: 1px solid var(--text-color); padding: 0.2em; width: 300px; max-width: 40% !important; box-sizing: border-box; }
         #article-content .infobox th, #article-content .infobox td, #article-content table th, #article-content table td { border: 1px solid var(--text-color); padding: 0.3em; }
         #article-content .infobox, #article-content table:not(.navbox):not(.vertical-navbox) { display: table !important; }
-        #article-content .infobox th { font-weight: 700 !important; } /* Headers are an exception */
+        #article-content .infobox th { font-weight: 700 !important; } 
 
         /* Minimal CSS Hiding for Stability */
         #article-content .mw-editsection,
@@ -412,6 +412,28 @@
     const WIKI_REST_HTML = 'https://en.wikipedia.org/api/rest_v1/page/html/';
     const WIKI_REST_SUMMARY = 'https://en.wikipedia.org/api/rest_v1/page/summary/';
 
+    // --- Utility Function for Fetch with Timeout (Fixes hanging "loading") ---
+    function fetchWithTimeout(resource, options = {}) {
+        const { timeout = 10000 } = options; // 10 seconds timeout
+        
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+
+        return fetch(resource, {
+            ...options,
+            signal: controller.signal  
+        }).then(response => {
+            clearTimeout(id);
+            return response;
+        }).catch(error => {
+            clearTimeout(id);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out.');
+            }
+            throw error;
+        });
+    }
+
     // --- Customization Logic (Saved to browser via localStorage) ---
     function applyTheme(themeClass) {
         body.className = themeClass;
@@ -464,7 +486,6 @@
     document.getElementById('toc-open-btn').onclick = () => tocMenu.classList.add('open');
     document.getElementById('toc-close-btn').onclick = () => tocMenu.classList.remove('open');
 
-    // Fix: close menus when clicking on the article content area (excluding buttons/menus themselves)
     document.addEventListener('click', (e) => {
         const isSettingsOpen = settingsMenu.classList.contains('open');
         const isTocOpen = tocMenu.classList.contains('open');
@@ -477,7 +498,6 @@
     }, true);
 
 
-    // FIX: Modify showError to handle not found with search link
     function showError(message, detail, failedTitle){
         heroImage.src = '';
         articleTitleHeader.textContent = 'Error';
@@ -510,10 +530,9 @@
         const encoded = encodeURIComponent(title.replace(/\s+/g,'_'));
 
         try{
-            // 1) Fetch summary (metadata + thumbnail)
-            const summaryResp = await fetch(WIKI_REST_SUMMARY + encoded, {mode:'cors'});
+            // 1) Fetch summary (metadata + thumbnail) - Using fetchWithTimeout
+            const summaryResp = await fetchWithTimeout(WIKI_REST_SUMMARY + encoded, {mode:'cors'});
             if(!summaryResp.ok){
-                // FIX: Pass the failed title to showError for a better search option
                 if(summaryResp.status===404) return showError('Article not found','Try a different search term.', title);
                 throw new Error('Summary fetch failed: ' + summaryResp.status);
             }
@@ -539,8 +558,8 @@
                 heroImage.src = '';
             }
 
-            // 2) Fetch the page HTML via REST 
-            const htmlResp = await fetch(WIKI_REST_HTML + encoded, {mode:'cors'});
+            // 2) Fetch the page HTML via REST - Using fetchWithTimeout
+            const htmlResp = await fetchWithTimeout(WIKI_REST_HTML + encoded, {mode:'cors'});
             if(!htmlResp.ok){
                 throw new Error('HTML fetch failed: ' + htmlResp.status);
             }
@@ -568,7 +587,11 @@
 
         }catch(err){
             console.error(err);
-            showError('Network or parsing error','Check the browser console for details. ' + (err.message||''));
+            if (err.message.includes('timed out')) {
+                showError('Request Timed Out','The Wikipedia server did not respond in time (10 seconds). Try searching again or check your connection.', title);
+            } else {
+                showError('Network or parsing error','Check the browser console for details. ' + (err.message||''), title);
+            }
         }
     }
     
@@ -602,25 +625,25 @@
         });
         
         // FIX: Series Box Placement (move to end)
-        const seriesBoxes = articleContentDiv.querySelectorAll('.series-box, .series-series, table.series, .series-series-box');
+        // Includes common classes for navigation/series boxes
+        const seriesBoxes = articleContentDiv.querySelectorAll('.series-box, .series-series, table.series, .series-series-box, .serieslist, .navbox-inner');
         seriesBoxes.forEach(box => {
-            // Remove the box from its current position
             box.remove();
-            // Append it to the very end of the content
             articleContentDiv.appendChild(box);
         });
 
         // FIX: Links: Ensure all internal Wikipedia links are handled by the reader
         articleContentDiv.querySelectorAll('a').forEach(a=>{
             const href = a.getAttribute('href') || '';
+            a.removeAttribute('onclick'); // CRITICAL: Remove any potential inline JS handlers
             
             if(href.startsWith('/wiki/')){
                 // Internal Wikipedia link
-                const titleMatch = href.match(/\/wiki\/([^&]+)/) || [null, ''];
+                const titleMatch = href.match(/\/wiki\/([^?#]+)/) || [null, '']; 
                 const title = decodeURIComponent(titleMatch[1] || href.substring(6)).replace(/_/g,' ');
                 
                 a.setAttribute('data-article', title);
-                a.removeAttribute('href'); // <-- CRITICAL FIX: Removes the browser's navigation ability
+                a.removeAttribute('href'); // CRITICAL FIX: Removes the browser's navigation ability
                 a.classList.add('wiki-link'); 
             } else if(href.startsWith('#')){
                 // keep as-is for in-page anchors
@@ -628,10 +651,8 @@
                 // External links open new tab
                 a.setAttribute('target','_blank');
                 a.setAttribute('rel','noopener');
-            } else {
-                // Catch anything else that might cause navigation and remove its href
-                a.removeAttribute('href');
             }
+            // Note: We avoid aggressively removing 'href' from all other links to maintain functional anchors/external links.
         });
 
         // Minimal cleanup for boilerplate and broken interactive elements (like maps)
@@ -668,10 +689,10 @@
     }
 
     function setupLinkListeners(){
-        // FIX: Use the wiki-link class to listen for internal navigation clicks
+        // FIX: Re-establish click handler for internal links
         articleContentDiv.querySelectorAll('.wiki-link').forEach(link=>{
             link.addEventListener('click', e=>{
-                e.preventDefault(); // CRITICAL: Stop the browser from navigating if any href remains
+                e.preventDefault(); 
                 const articleTitle = e.currentTarget.getAttribute('data-article');
                 if(articleTitle) {
                     searchInput.value = articleTitle;
